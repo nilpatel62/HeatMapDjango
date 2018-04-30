@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>HeatMap</title>
+    <style>
+      /* Always set the map height explicitly to define the size of the div
+       * element that contains the map. */
+      #map {
+        height: 60%;
+      }
+      /* Optional: Makes the sample page fill the window. */
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      #dropbox {
+        position: absolute;
+        top: 0px;
+        left: 30%;
+
+        z-index: 5;
+        padding: 5px;
+        text-align: center;
+        font-family: 'Roboto','sans-serif';
+        line-height: 30px;
+        padding-left: 10px;
+      }
+      #zonebox {
+        position: absolute;
+        top: 0px;
+        left:10%;
+
+        z-index: 5;
+        padding: 5px;
+        text-align: center;
+        font-family: 'Roboto','sans-serif';
+        line-height: 30px;
+        padding-left: 10px;
+      }
+    </style>
+</head>
+<body>
+<div id="dropbox">
+    <select style="length: 50%" id="city" name="city" >
+        {% for i in city %}
+        <option onclick="initMap()" value="{{ i }}">{{ i }}</option>
+        {% endfor %}
+    </select>
+</div>
+<div id="zonebox">
+    <select style="length: 50%" id="zone" name="zone" >
+        {% for i in title_zone %}
+        <option onclick="initMap()" value="{{ i }}">{{ i }}</option>
+        {% endfor %}
+    </select>
+</div>
+<div id="map">
+</div>
+<script type="text/javascript">
+
+        function initMap(){
+            var city = $('#city').val()
+            console.log(city),
+            $.ajax({
+                  url: 'http://127.0.0.1:8000/getlatlong/'+ city,
+                  type: 'POST',
+                  dataType: 'json',
+                  data: city,
+                  success: function (data, textStatus, xhr) {
+                  var map = new google.maps.Map(document.getElementById('map'), {
+                      zoom: 8,
+                      center: data,
+                      mapTypeId: 'terrain'
+                    });
+                    $.ajax({
+                          url: 'http://127.0.0.1:8000/getzone/'+ city,
+                          type: 'POST',
+                          dataType: 'json',
+                          data: city,
+                          success: function (data, textStatus, xhr) {
+                                $('#zone').val(data.title)
+                            },
+                        });
+
+
+                   var flightPath = new google.maps.Polyline({
+                        path: [
+                      {lat: 13.0196, lng: 77.5968},
+                      {lat: 12.9788, lng: 77.5996},
+                      {lat: 12.9767, lng: 77.5713},
+                      {lat: 13.0102, lng: 77.5837},
+                      {lat: 13.0196, lng: 77.5968}
+                        ],
+                      geodesic: true,
+                      strokeColor: '#FF0000',
+                      strokeOpacity: 1.0,
+                      strokeWeight: 2
+                    });
+
+                   var  heatmap = new google.maps.visualization.HeatmapLayer({
+                      data: getPoints(),
+                      map: map
+                    });
+
+                    flightPath.setMap(map);
+                   },
+                  error: function (xhr, textStatus, errorThrown) {
+                        console.log('Error in Operation');
+                  }
+            });
+        };
+        function getPoints() {
+          latlong = []
+          latitude = {{ latitude }}
+          longitude = {{ longitude }}
+          for(var i=0;i<latitude.length;i++)
+          {
+            latlong.push(new google.maps.LatLng(latitude[i], longitude[i]))
+          }
+            return latlong
+        }
+</script>
+<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+<script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBEqpzxaYGHBF-7KC_rCH-cOIhceWDUotY&libraries=visualization&callback=initMap">
+</script>
+</body>
+</html>
