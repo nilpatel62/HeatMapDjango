@@ -1,14 +1,28 @@
-<!DOCTYPE html>
+{% load staticfiles %}
 <html>
 <head>
-    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
-    <meta charset="utf-8">
-    <title>HeatMap</title>
-    <style>
+  <meta charset="utf-8">
+  <title>Heatmaps</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <link href="{% static 'css/lib/bootstrap/bootstrap.min.css' %}" rel="stylesheet">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <link href="{% static 'css/helper.css' %}" rel="stylesheet %}">
+  <link href="{% static 'css/style.css' %}" rel="stylesheet">
+  <link href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" rel="stylesheet" />
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+  <link rel="stylesheet" href="https://flatpickr.js.org/stylesheets/temporary.css">
+  <link rel="stylesheet" href="https://flatpickr.js.org/stylesheets/palettes.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@latest/dist/flatpickr.css">
+  <style>
       /* Always set the map height explicitly to define the size of the div
        * element that contains the map. */
       #map {
-        height: 60%;
+        height: 100%;
       }
       /* Optional: Makes the sample page fill the window. */
       html, body {
@@ -16,116 +30,553 @@
         margin: 0;
         padding: 0;
       }
-      #dropbox {
-        position: absolute;
-        top: 0px;
-        left: 30%;
-
-        z-index: 5;
-        padding: 5px;
-        text-align: center;
-        font-family: 'Roboto','sans-serif';
-        line-height: 30px;
-        padding-left: 10px;
+      .a
+      {
+          display: inline-block;
       }
-      #zonebox {
-        position: absolute;
-        top: 0px;
-        left:10%;
 
-        z-index: 5;
-        padding: 5px;
-        text-align: center;
-        font-family: 'Roboto','sans-serif';
-        line-height: 30px;
-        padding-left: 10px;
-      }
-    </style>
+
+  </style>
 </head>
-<body>
-<div id="dropbox">
-    <select style="length: 50%" id="city" name="city" >
-        {% for i in city %}
-        <option onclick="initMap()" value="{{ i }}">{{ i }}</option>
-        {% endfor %}
-    </select>
-</div>
-<div id="zonebox">
-    <select style="length: 50%" id="zone" name="zone" >
-        {% for i in title_zone %}
-        <option onclick="initMap()" value="{{ i }}">{{ i }}</option>
-        {% endfor %}
-    </select>
-</div>
-<div id="map">
-</div>
-<script type="text/javascript">
 
-        function initMap(){
-            var city = $('#city').val()
-            console.log(city),
+<body>
+<div class="card">
+  <div class="form-group row">
+    <div id="dropbox" class="col-sm-2">
+      <select style="length: 50%" id="city" name="city" class="btn btn-default" onclick="getDate()">
+        {% for i, j in city_name %}
+        <option  value="{{ j }}">{{ i }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div id="zonebox" class="col-sm-3">
+      <select style="length: 50%" id="zone" name="zone" class="btn btn-default" onclick="showZone()">
+        <option value="selectedvidence" id="selectedvidence"  name="selectedvidence">Select Zone</option>
+
+      </select>
+    </div>
+
+    <div id="days_box" class="col-sm-2">
+      <select style="length: 50%" id="days" name="days" class="btn btn-default" onclick="getDate()">
+        <option value="0">Today</option>
+        <option value="1">Yesterday</option>
+        <option value="2">PastSevenDays</option>
+        <option value="3">PastThirtyDays</option>
+        <option value="4">PastOneYear</option>
+      </select>
+    </div>
+  </div>
+</div>
+<br>
+<div class="card">
+  <div class="form-group row" id="startdates">
+    <label class="col-sm-1 control-label">Start Date:</label>
+    <div class="col-sm-4">
+      <input class="flatpickr form-control"  type="text" placeholder="Start Date.." data-id="datetime" id="startdate" name="startdate" >
+    </div>
+  </div>
+  <div class="form-group row" id="enddates" >
+    <label class="col-sm-1 control-label ">End Date:</label>
+    <div class="col-sm-4">
+      <input class="flatpickr form-control"  type="text" placeholder="End Date.." data-id="datetime" id="enddate" name="enddate" >
+    </div>
+  </div>
+  <div>
+    <button class="btn btn-default"  value="5" id="customdate" onclick="getCustomDate()" name="customDate">Get Date</button>
+  </div>
+</div>
+<div id="map"></div>
+&nbsp;&nbsp;&nbsp;<label id="totalride"></label><br>
+&nbsp;&nbsp;&nbsp;<label id="completed"></label><br>
+&nbsp;&nbsp;&nbsp;<label id="bookingexpired"></label><br>
+&nbsp;&nbsp;&nbsp;<label id="drivercancel"></label><br>
+&nbsp;&nbsp;&nbsp;<label id="customercancel"></label><br>
+&nbsp;&nbsp;&nbsp;<label id="requestcancel"></label>
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <!--<div class="card-body">-->
+      <div class="table-responsive m-t-40">
+        <table id="myTable" class="table table-bordered table-striped" align="center">
+          <thead>
+          <tr>
+            <th>Sr No</th>
+            <th>Booking Id</th>
+            <th>Booking Date</th>
+            <th>Status</th>
+          </tr>
+          </thead>
+          <tbody id="tbodyid">
+
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<!--</div>-->
+<script type="text/javascript">
+    function getDate(){
+              console.log('hello');
+              var map
+        var days = $('#days').val()
+        var customdate = $('#customdate').val()
+        console.log(days)
+        console.log(customdate)
+        var date = $('#customDate').val()
+        var id = $('#zone').val()
+        var city = $('#city').val()
             $.ajax({
-                  url: 'http://127.0.0.1:8000/getlatlong/'+ city,
+        <!--call API for data Between Given Date or Selected DropBox-->
+                  url: 'http://127.0.0.1:8000/getdate/'+ days,
                   type: 'POST',
                   dataType: 'json',
-                  data: city,
                   success: function (data, textStatus, xhr) {
-                  var map = new google.maps.Map(document.getElementById('map'), {
-                      zoom: 8,
-                      center: data,
-                      mapTypeId: 'terrain'
-                    });
+                  console.log('--', data);
+                  <!--Feel Datatable-->
+                    var dataTable = $('#myTable').DataTable();
+                    console.log('------------', dataTable);
+                    dataTable.clear()
+                    if(data != null)
+                    {
+                      for(var i=0;i<data.length;i++)
+                      {
+                                    document.getElementById('totalride').innerHTML = 'Total Ride: '+data[i].total_ride;
+                                    document.getElementById('completed').innerHTML = 'Booking Completed: '+data[i].booking_complete;
+                                    document.getElementById('bookingexpired').innerHTML = 'Booking Expired: '+data[i].booking_expired;
+                                    document.getElementById('requestcancel').innerHTML = 'Request Cancelled: '+data[i].request_cancle;
+                                    document.getElementById('drivercancel').innerHTML = 'Driver Cancelled: '+data[i].driver_cancel;
+                                    document.getElementById('customercancel').innerHTML = 'Customer Cancelled: '+data[i].customer_cancel;
+                                    tr = document.createElement("tr");
+                                    tr.innerHTML = "<tr><td>"+i+"</td><td>"+data[i].bookingId+"</td><td>"+data[i].bookingDate+"</td><td>"+data[i].bookingStatusText+"</td></tr>";
+                                    dataTable.row.add(tr);
+                      }
+                      dataTable.draw();
+                      console.log(data['total_ride']);
+                    }
+                    else
+                      {
+                         $('#totalride').html('');
+                         $('#completed').html('');
+                         $('#bookingexpired').html('');
+                         $('#requestcancel').html('');
+                         $('#drivercancel').html('');
+                         $('#customercancel').html('');
+                         tr = document.createElement("tr");
+                         dataTable.draw();
+                      }
+
+        <!--Call API for getting data for City Latitude and longitude -->
                     $.ajax({
-                          url: 'http://127.0.0.1:8000/getzone/'+ city,
+                          url: 'http://127.0.0.1:8000/getlatlong/'+ city,
                           type: 'POST',
                           dataType: 'json',
                           data: city,
-                          success: function (data, textStatus, xhr) {
-                                $('#zone').val(data.title)
-                            },
-                        });
+                          success: function (latlong, textStatus, xhr) {
+                                            console.log('--', latlong);
+                                 var map = new google.maps.Map(document.getElementById('map'), {
+                                  zoom: 10,
+                                  center: latlong,
+                                  mapTypeId: 'roadmap'
 
+                                });
 
-                   var flightPath = new google.maps.Polyline({
-                        path: [
-                      {lat: 13.0196, lng: 77.5968},
-                      {lat: 12.9788, lng: 77.5996},
-                      {lat: 12.9767, lng: 77.5713},
-                      {lat: 13.0102, lng: 77.5837},
-                      {lat: 13.0196, lng: 77.5968}
-                        ],
-                      geodesic: true,
-                      strokeColor: '#FF0000',
-                      strokeOpacity: 1.0,
-                      strokeWeight: 2
+        <!--Call API for getting data for City Zone Latitude and longitude -->
+                                $.ajax({
+                                      url: 'http://127.0.0.1:8000/getzone/'+ city,
+                                      type: 'POST',
+                                      dataType: 'json',
+                                      data: city,
+                                      success: function (data, textStatus, xhr) {
+                                      console.log('----', data);
+                                      $('#zone').html('');
+                                        $("#zone").append("<option value=''>"+"Select Zone"+"</option>")
+                                             for (var i=0 ; i<data.length; i++) {
+                                                $("#zone").append("<option value="+data[i].id+">"+data[i].title+"</option>");
+                                             }
+                                      },
+                                      error: function (xhr, textStatus, errorThrown) {
+                                            console.log('Error in Operation');
+                                      }
+                                });
+
+        <!--Call API for getting data for City Polygon Latitude and longitude -->
+                          $.ajax({
+                                  url: 'http://127.0.0.1:8000/getcitylatlong/'+ city,
+                                  type: 'POST',
+                                  dataType: 'json',
+                                  success: function (data, textStatus, xhr) {
+                                    $.ajax({
+                                    url: 'http://127.0.0.1:8000/getzonelatlong/'+ city,
+                                    type: 'POST',
+                                    dataType: 'json',
+                                    success: function (data, textStatus, xhr) {
+                                    console.log('-------', data);
+                                    for(var i=0;i<data.length;i++)
+                                    {
+                                            var flightPath = new google.maps.Polyline({
+                                            path: data[i],
+                                            geodesic: true,
+                                            strokeColor: '#e900ff',
+                                            strokeOpacity: 1.0,
+                                            strokeWeight: 2
+                                      });
+                                  flightPath.setMap(map);
+                                    }
+                                   }
+                                  });
+
+        <!--Draw City Polygon-->
+                                      var flightPath = new google.maps.Polyline({
+                                          path: data,
+                                          geodesic: true,
+                                          strokeColor: '#FF0000',
+                                          strokeOpacity: 1.0,
+                                          strokeWeight: 2
+                                      });
+                                  flightPath.setMap(map);
+                                    }
+                                  });
+                                var  heatmap = new google.maps.visualization.HeatmapLayer({
+                                      data: getDatas(),
+                                      map: map
+                                    });
+
+        <!--Feel Map With Data Which getting Through API-->
+                                function getDatas() {
+                                console.log(data);
+                                if(data != null)
+                                {
+                                    latlong = []
+                                    for(var i=0;i<data.length;i++)
+                                    {
+                                      latlong.push(new google.maps.LatLng(data[i]['latitude'], data[i]['longitude']))
+                                    }
+                                    console.log(latlong.length);
+                                    return latlong
+                                }
+                                else
+                                  {
+                                    latlong = []
+                                    latlong.push(new google.maps.LatLng(null, null))
+                                    return latlong
+                                  }
+
+                            }
+                          },
+                          error: function (xhr, textStatus, errorThrown) {
+                                console.log('Error in Operation');
+                          }
                     });
-
-                   var  heatmap = new google.maps.visualization.HeatmapLayer({
-                      data: getPoints(),
-                      map: map
-                    });
-
-                    flightPath.setMap(map);
                    },
                   error: function (xhr, textStatus, errorThrown) {
                         console.log('Error in Operation');
                   }
             });
         };
-        function getPoints() {
-          latlong = []
-          latitude = {{ latitude }}
-          longitude = {{ longitude }}
-          for(var i=0;i<latitude.length;i++)
-          {
-            latlong.push(new google.maps.LatLng(latitude[i], longitude[i]))
-          }
-            return latlong
-        }
-</script>
-<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+  </script>
+<script type="text/javascript">
+    function showZone(){
+              console.log('hello');
+              var map
+        var days = $('#days').val()
+        var id = $('#zone').val()
+        var city = $('#city').val()
+
+    <!--call API for data Between Given Date or Selected DropBox-->
+            $.ajax({
+                  url: 'http://127.0.0.1:8000/getdate/'+ days,
+                  type: 'POST',
+                  dataType: 'json',
+                  success: function (data, textStatus, xhr) {
+    <!--Call API for getting data for City Latitude and longitude -->
+                    $.ajax({
+                          url: 'http://127.0.0.1:8000/getzonelat/'+ id,
+                          type: 'POST',
+                          dataType: 'json',
+                          data: city,
+                          success: function (latlong, textStatus, xhr) {
+                                 var map = new google.maps.Map(document.getElementById('map'), {
+                                  zoom: 16,
+                                  center: latlong,
+                                  mapTypeId: 'roadmap'
+                                });
+
+        <!--Call API for getting data for City Polygon Latitude and longitude -->
+                          $.ajax({
+                                  url: 'http://127.0.0.1:8000/getcitylatlong/'+ city,
+                                  type: 'POST',
+                                  dataType: 'json',
+                                  success: function (data, textStatus, xhr) {
+
+        <!--Call API for getting data for Zone Latitude and longitude -->
+                                    $.ajax({
+                                    url: 'http://127.0.0.1:8000/getzonelatlong/'+ city,
+                                    type: 'POST',
+                                    dataType: 'json',
+                                    success: function (data, textStatus, xhr) {
+
+        <!--Draw Zone Polygon-->
+                                    for(var i=0;i<data.length;i++)
+                                    {
+                                            var flightPath = new google.maps.Polyline({
+                                            path: data[i],
+                                            geodesic: true,
+                                            strokeColor: '#e900ff',
+                                            strokeOpacity: 1.0,
+                                            strokeWeight: 2
+                                      });
+                                  flightPath.setMap(map);
+                                    }
+                                   }
+                                  });
+                                      var flightPath = new google.maps.Polyline({
+                                          path: data,
+                                          geodesic: true,
+                                          strokeColor: '#FF0000',
+                                          strokeOpacity: 1.0,
+                                          strokeWeight: 2
+                                      });
+                                  flightPath.setMap(map);
+                                    }
+                                  });
+                                var  heatmap = new google.maps.visualization.HeatmapLayer({
+                                      data: getDatas(),
+                                      map: map
+                                    });
+
+        <!--Feel Map With Data Which getting Through API-->
+                                function getDatas() {
+                                console.log(data);
+                                if(data != null)
+                                {
+                                    latlong = []
+                                    for(var i=0;i<data.length;i++)
+                                    {
+                                      latlong.push(new google.maps.LatLng(data[i]['latitude'], data[i]['longitude']))
+                                    }
+                                    console.log(latlong.length);
+                                    return latlong
+                                }
+                                else
+                                  {
+                                    latlong = []
+                                    latlong.push(new google.maps.LatLng(null, null))
+                                    return latlong
+                                  }
+
+                            }
+                          },
+                          error: function (xhr, textStatus, errorThrown) {
+                                console.log('Error in Operation');
+                          }
+                    });
+                   },
+                  error: function (xhr, textStatus, errorThrown) {
+                        console.log('Error in Operation');
+                  }
+            });
+        };
+  </script>
+<script type="text/javascript">
+    function getCustomDate(){
+        console.log('hello');
+        var map
+        var startdate = $('#startdate').val()
+        var enddate = $('#enddate').val()
+        var dates = {"startdate": startdate, "enddate": enddate}
+        console.log(dates)
+        var date = $('#customDate').val()
+        var id = $('#zone').val()
+        var city = $('#city').val()
+            $.ajax({
+        <!--call API for data Between Given Date or Selected DropBox-->
+                  url: 'http://127.0.0.1:8000/getdate/'+ 5,
+                  type: 'POST',
+                  dataType: 'json',
+                  data: dates,
+                  success: function (data, textStatus, xhr) {
+        <!--Feel Datatable-->
+                    var dataTable = $('#myTable').DataTable();
+                    <!--var dataTable = $("#myTable").dataTable().api();-->
+                    dataTable.clear();
+                    console.log(data);
+                    if(data != null)
+                    {
+                      for(var i=0;i<data.length;i++)
+                      {
+                                    document.getElementById('totalride').innerHTML = 'Total Ride: '+data[i].total_ride;
+                                    document.getElementById('completed').innerHTML = 'Booking Completed: '+data[i].booking_complete;
+                                    document.getElementById('bookingexpired').innerHTML = 'Booking Expired: '+data[i].booking_expired;
+                                    document.getElementById('requestcancel').innerHTML = 'Request Cancelled: '+data[i].request_cancle;
+                                    document.getElementById('drivercancel').innerHTML = 'Driver Cancelled: '+data[i].driver_cancel;
+                                    document.getElementById('customercancel').innerHTML = 'Customer Cancelled: '+data[i].customer_cancel;
+                                    tr = document.createElement("tr");
+                                    tr.innerHTML = "<tr><td>"+i+"</td><td>"+data[i].bookingId+"</td><td>"+data[i].bookingDate+"</td><td>"+data[i].bookingStatusText+"</td></tr>";
+                                    dataTable.row.add(tr);
+                      }
+                      dataTable.draw();
+                      console.log(data['total_ride']);
+                    }
+                    else
+                      {
+                         $('#totalride').html('');
+                         $('#completed').html('');
+                         $('#bookingexpired').html('');
+                         $('#requestcancel').html('');
+                         $('#drivercancel').html('');
+                         $('#customercancel').html('');
+                         tr = document.createElement("tr");
+                         tr.innerHTML = tr.innerHTML = "<tr><td>"+null+"</td><td>"+null+"</td><td>"+null+"</td><td>"+null+"</td></tr>";
+                         dataTable.row.add(tr);
+                      }
+
+
+        <!--Call API for getting data for City Latitude and longitude -->
+                    $.ajax({
+                          url: 'http://127.0.0.1:8000/getlatlong/'+ city,
+                          type: 'POST',
+                          dataType: 'json',
+                          data: city,
+                          success: function (latlong, textStatus, xhr) {
+                                 var map = new google.maps.Map(document.getElementById('map'), {
+                                  zoom: 10,
+                                  center: latlong,
+                                  mapTypeId: 'roadmap'
+
+                                });
+
+        <!--Call API for getting data for City Zone Latitude and longitude -->
+                                $.ajax({
+                                      url: 'http://127.0.0.1:8000/getzone/'+ city,
+                                      type: 'POST',
+                                      dataType: 'json',
+                                      data: city,
+                                      success: function (data, textStatus, xhr) {
+                                      if(data != null)
+                                      {
+                                        $('#zone').html('');
+                                        $("#zone").append("<option value=''>"+"Select Zone"+"</option>")
+                                             for (var i=0 ; i<data.length; i++) {
+                                                $("#zone").append("<option value="+data[i].id+">"+data[i].title+"</option>");
+                                             }
+                                          }
+                                      },
+                                      error: function (xhr, textStatus, errorThrown) {
+                                            console.log('Error in Operation');
+                                      }
+                                });
+
+        <!--Call API for getting data for City Polygon Latitude and longitude -->
+                          $.ajax({
+                                  url: 'http://127.0.0.1:8000/getcitylatlong/'+ city,
+                                  type: 'POST',
+                                  dataType: 'json',
+                                  success: function (data, textStatus, xhr) {
+                                    $.ajax({
+                                    url: 'http://127.0.0.1:8000/getzonelatlong/'+ city,
+                                    type: 'POST',
+                                    dataType: 'json',
+                                    success: function (data, textStatus, xhr) {
+                                    if(data != null)
+                                    {
+                                      for(var i=0;i<data.length;i++)
+                                    {
+                                            var flightPath = new google.maps.Polyline({
+                                            path: data[i],
+                                            geodesic: true,
+                                            strokeColor: '#e900ff',
+                                            strokeOpacity: 1.0,
+                                            strokeWeight: 2
+                                        });
+                                        flightPath.setMap(map);
+                                      }
+                                    }
+                                   }
+                                  });
+
+        <!--Draw City Polygon-->
+                                      var flightPath = new google.maps.Polyline({
+                                          path: data,
+                                          geodesic: true,
+                                          strokeColor: '#FF0000',
+                                          strokeOpacity: 1.0,
+                                          strokeWeight: 2
+                                      });
+                                  flightPath.setMap(map);
+                                    }
+                                  });
+                                var  heatmap = new google.maps.visualization.HeatmapLayer({
+                                      data: getDatas(),
+                                      map: map
+                                    });
+
+        <!--Feel Map With Data Which getting Through API-->
+                                function getDatas() {
+                                console.log(data);
+                                if(data != null)
+                                {
+                                    latlong = []
+                                    for(var i=0;i<data.length;i++)
+                                    {
+                                      latlong.push(new google.maps.LatLng(data[i]['latitude'], data[i]['longitude']))
+                                    }
+                                    console.log(latlong.length);
+                                    return latlong
+                                }
+                                else
+                                  {
+                                    latlong = []
+                                    latlong.push(new google.maps.LatLng(null, null))
+                                    return latlong
+                                  }
+
+                            }
+                          },
+                          error: function (xhr, textStatus, errorThrown) {
+                                console.log('Error in Operation');
+                          }
+                    });
+                   },
+                  error: function (xhr, textStatus, errorThrown) {
+                        console.log('Error in Operation');
+                  }
+            });
+        };
+  </script>
+
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+
+
+<!--For Date flatpickr -->
+
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@latest/dist/flatpickr.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@latest/dist/plugins/confirmDate/confirmDate.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@latest/dist/plugins/weekSelect/weekSelect.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@latest/dist/plugins/rangePlugin.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@latest/dist/plugins/minMaxTimePlugin.js"></script>
+<script src="https://flatpickr.js.org/flatpickr.js"></script>
+<script src="https://flatpickr.js.org/themer.js"></script>
+
+
+<script src="{% static 'js/lib/bootstrap/js/popper.min.js' %}"></script>
+<script src="{% static 'js/lib/bootstrap/js/bootstrap.min.js' %}"></script>
+<script src="{% static 'js/jquery.slimscroll.js' %}"></script>
+<script src="{% static 'js/sidebarmenu.js' %}"></script>
+<script src="{% static 'js/lib/sticky-kit-master/dist/sticky-kit.min.js' %}"></script>
+<script src="{% static 'js/custom.min.js' %}"></script>
+<script src="{% static 'js/lib/datatables/datatables.min.js' %}"></script>
+<script src="{% static 'js/lib/datatables/cdn.datatables.net/buttons/1.2.2/js/dataTables.buttons.min.js' %}"></script>
+<script src="{% static 'js/lib/datatables/cdn.datatables.net/buttons/1.2.2/js/buttons.flash.min.js' %}"></script>
+<script src="{% static 'js/lib/datatables/cdnjs.cloudflare.com/ajax/libs/jszip/2.5.0/jszip.min.js' %}"></script>
+<script src="{% static 'js/lib/datatables/cdn.rawgit.com/bpampuch/pdfmake/0.1.18/build/pdfmake.min.js' %}"></script>
+<script src="{% static 'js/lib/datatables/cdn.rawgit.com/bpampuch/pdfmake/0.1.18/build/vfs_fonts.js' %}"></script>
+<script src="{% static 'js/lib/datatables/cdn.datatables.net/buttons/1.2.2/js/buttons.html5.min.js' %}"></script>
+<script src="{% static 'js/lib/datatables/cdn.datatables.net/buttons/1.2.2/js/buttons.print.min.js' %}"></script>
+<script src="{% static 'js/lib/datatables/datatables-init.js' %}"></script>
 <script async defer
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBEqpzxaYGHBF-7KC_rCH-cOIhceWDUotY&libraries=visualization&callback=initMap">
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBEqpzxaYGHBF-7KC_rCH-cOIhceWDUotY&libraries=visualization&callback=getDate">
 </script>
 </body>
 </html>

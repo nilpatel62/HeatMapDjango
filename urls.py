@@ -1,21 +1,19 @@
-"""HeatMap URL Configuration
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/1.11/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  url(r'^$', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  url(r'^$', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.conf.urls import url, include
-    2. Add a URL to urlpatterns:  url(r'^blog/', include('blog.urls'))
-"""
 from django.conf.urls import url
-from django.contrib import admin
+from HeatMapp import views
+# from DashboardandApis import views/views
+
+app_name = 'HeatMapp'
+
 
 urlpatterns = [
-    url(r'^admin/', admin.site.urls),
+    # Api
+    url(r'^HeatMap/$', views.initialize, name='initialize'),
+    url(r'^getlatlong/(?P<cityname>[\w\-]+)$', views.GetCitiesDataAPI.as_view(), name='GetCitiesDataAPI'),
+    url(r'^getcitylatlong/(?P<cityname>[\w\-]+)$', views.GetCitiesLatLongAPI.as_view(), name='GetCitiesDataAPI'),
+    url(r'^getzonelatlong/(?P<cityname>[\w\-]+)$', views.GetZoneLatLongAPI.as_view(), name='GetZoneLatLongAPI'),
+    # url(r'^getlatlong/$', views.GetCitiesDataAPI.as_view(), name='GetCitiesDataAPI'),
+    url(r'^getzone/(?P<cityname>[\w\-]+)$', views.GetCitiesZoneAPI.as_view(), name='GetCitiesZoneAPI'),
+    url(r'^getzonelat/(?P<id>[\w\-]+)$', views.GetCitiesZoneLatAPI.as_view(), name='GetCitiesZoneAPI'),
+    url(r'^getdate/(?P<date>[\w\-]+)$', views.GetDateAPI.as_view(), name='GetDateAPI'),
+    # url(r'^getareazone/(?P<zone>[\w\-]+)$', views.GetAreaZoneAPI.as_view(), name='GetAreaZoneAPI'),
 ]
