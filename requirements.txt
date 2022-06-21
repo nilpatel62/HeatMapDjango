@@ -3,7 +3,7 @@ chardet==3.0.4
 Django==2.1
 djangorestframework==3.8.2
 idna==2.7
-numpy==1.15.0
+numpy==1.22.0
 pandas==0.23.4
 pymongo==3.7.1
 python-dateutil==2.7.3
